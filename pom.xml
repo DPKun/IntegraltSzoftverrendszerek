@@ -29,5 +29,6 @@
   	<module>refcounter.persist.excel</module>
   	
   	<module>refcounter.web</module>
+  	<module>refcounter.service</module>
   </modules>
 </project>
