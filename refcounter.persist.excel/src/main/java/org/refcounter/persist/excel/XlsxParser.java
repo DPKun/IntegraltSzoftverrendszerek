@@ -5,13 +5,15 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
 import org.apache.poi.xssf.streaming.SXSSFRow.CellIterator;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -23,7 +25,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * class should be capable of querying the data and upload it into a file
  *
  */
-public class XlsxParser {
+public class XlsxParser implements Parser {
 
 	/**
 	 * Check if the given String is a ISSN number
@@ -33,7 +35,7 @@ public class XlsxParser {
 	 * @return true, if the string is a possible ISSN number, false if it does
 	 *         not match the format of the ISSN number
 	 */
-	public boolean checkISSN(String ISSN) {
+	private boolean checkISSN(String ISSN) {
 		if (ISSN.length() == 9) {
 			if ("-".equalsIgnoreCase(ISSN.substring(4, 5))) {
 				return true;
@@ -45,6 +47,21 @@ public class XlsxParser {
 		}
 	}
 
+	// TODO Create matcher for ISSN handling
+	/*
+	 * public List<String> getISSNs(String cellValue) { List<String> result =
+	 * new ArrayList<String>(); if (cellValue.length() < 13) { return result; }
+	 * else if(cellValue.length()==13) { String ISSN = cellValue.substring(5,
+	 * 9); ISSN = ISSN.concat("-"); ISSN = ISSN.concat(cellValue.substring(9,
+	 * 13)); result.add(ISSN); } else{ String ISSN = cellValue.substring(5, 9);
+	 * ISSN= ISSN.concat("-"); ISSN=ISSN.concat(cellValue.substring(9,13));
+	 * result.add(ISSN); ISSN=cellValue.substring(15, 19);
+	 * ISSN=ISSN.concat("-"); ISSN=ISSN.concat(cellValue.substring(19,23));
+	 * result.add(ISSN); }
+	 * 
+	 * return result; }
+	 */
+
 	/**
 	 * Checks if the value of a given {@link XSSFCell} is empty.
 	 * 
@@ -53,7 +70,7 @@ public class XlsxParser {
 	 * @return {@code true} if the {@link XSSFCell} is empty. {@code false}
 	 *         otherwise.
 	 */
-	public static boolean isCellEmpty(final XSSFCell cell) {
+	private boolean isCellEmpty(final XSSFCell cell) {
 		if (cell == null || cell.getCellType() == Cell.CELL_TYPE_BLANK) {
 			return true;
 		}
@@ -66,7 +83,7 @@ public class XlsxParser {
 	}
 
 	/**
-	 * A workbook loading method to avoid multiple file access
+	 * A convenience method to load the workbook from a file
 	 * 
 	 * @param file
 	 *            The file from which the workbook should be loaded
@@ -74,19 +91,18 @@ public class XlsxParser {
 	 * @throws IOException
 	 *             if the filepath is wrong
 	 */
-	public XSSFWorkbook loadWorkBook(File file) throws IOException {
+	private XSSFWorkbook loadWorkBook(File file) throws IOException {
 		InputStream stream = new FileInputStream(file);
 		XSSFWorkbook workBook = new XSSFWorkbook(stream);
 		return workBook;
-
 	}
 
 	/**
 	 * This method gets the Data from the requested row or column. Currently
 	 * works with ISSN codes
 	 * 
-	 * @param workBook
-	 *            The workBook of the query
+	 * @param file
+	 *            The file from which the worktable should be loaded.
 	 * @param sheetName
 	 *            The name of the target worksheet
 	 * @param direction
@@ -102,16 +118,20 @@ public class XlsxParser {
 	 * @throws IOException
 	 *             if the filepath is not correct
 	 */
-	public Collection<String> getDataValues(XSSFWorkbook workBook, String sheetName, boolean direction, int column,
-			int row) throws InvalidFormatException, IOException {
+	public List<String> getDataValues(File file, String sheetName, boolean direction, int column, int row)
+			throws InvalidFormatException, IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
 		XSSFSheet table = workBook.getSheet(sheetName);
-		Set<String> result = new HashSet<String>();
+		List<String> result = new ArrayList<String>();
 		if (direction) {
 			XSSFRow workRow = table.getRow(row);
 			CellIterator iterator = (CellIterator) workRow.cellIterator();
 			while (iterator.hasNext()) {
 				XSSFCell workCell = (XSSFCell) iterator.next();
 				if (workCell.getColumnIndex() >= column) {
+					if (workCell.getCellTypeEnum().equals(CellType.NUMERIC)) {
+						workCell.setCellType(CellType.STRING);
+					}
 					result.add(workCell.getStringCellValue());
 				}
 			}
@@ -122,17 +142,22 @@ public class XlsxParser {
 				if (cell == null) {
 					break;
 				}
+				if (cell.getCellTypeEnum().equals(CellType.NUMERIC)) {
+					cell.setCellType(CellType.STRING);
+				}
 				String content = cell.getStringCellValue();
 				if (checkISSN(content)) {
 					result.add(content);
 				}
+				// result.addAll(getISSNs(content));
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * The method inserts the given records into a existing file
+	 * The method inserts the given records into a existing file. Instead of the
+	 * given coordinates in the worktable, it looks for the first empty line.
 	 * 
 	 * @param entries
 	 *            the records that should be uploaded
@@ -147,18 +172,11 @@ public class XlsxParser {
 	 * @throws IOException
 	 *             in case of bad filepath
 	 */
-	public void addRecordsToFile(Collection<String> entries, File file, XSSFWorkbook workBook, String sheetName,
-			String columnName) throws IOException {
+	public void addRecordsToFile(Collection<String> entries, File file, String sheetName, String columnName)
+			throws IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
 		// open the worksheet
-		XSSFSheet workSheet;
-		if (workBook.getSheet(sheetName) == null) {
-			workSheet = workBook.createSheet(sheetName);
-			XSSFCell cell = workSheet.createRow(0).createCell(0, CellType.STRING);
-			cell.setCellValue(columnName);
-
-		} else {
-			workSheet = workBook.getSheet(sheetName);
-		}
+		XSSFSheet workSheet = getSheet(workBook, sheetName);
 		// select the first empty line or create one, then upload the data
 		XSSFRow row = workSheet.getRow(0);
 		int index = -1;
@@ -169,33 +187,198 @@ public class XlsxParser {
 				break;
 			}
 		}
-		if (index == -1) {
-			row.createCell(row.getLastCellNum() + 1).setCellValue(columnName);
+		if (index < 0) {
+			row.createCell(row.getLastCellNum()).setCellValue(columnName);
+			index = row.getLastCellNum();
 		}
 		int insertIndex = 0;
 		for (String entry : entries) {
 			insertIndex++;
-			if (workSheet.getRow(insertIndex) == null) {
-				workSheet.createRow(insertIndex);
-			}
-			row = workSheet.getRow(insertIndex);
-			if (index == -1) {
-				XSSFCell cell = (XSSFCell) row.createCell(row.getLastCellNum() + 1);
-				cell.setCellValue(entry);
-			} else {
-				if (row.getCell(index) == null) {
-					row.createCell(index);
-				}
-				XSSFCell cell = (XSSFCell) row.getCell(index);
-				cell.setCellValue(entry);
-
-			}
+			row = getRow(workSheet, insertIndex);
+			XSSFCell cell = row.getCell(index, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+			cell.setCellType(CellType.STRING);
+			cell.setCellValue(entry);
 		}
-		// save the edited file
-		// TODO add file creation if file does not exist
 		FileOutputStream output = new FileOutputStream(file);
 		workBook.write(output);
 		output.close();
 	}
 
+	/**
+	 * Adds the given records to the file as a row.
+	 * 
+	 * @param entries
+	 *            The entries that should be added
+	 * @param file
+	 *            The file into which the user wants to upload the data.
+	 * @param sheetName
+	 *            The name of the into which the user wants to upload the data.
+	 * @param rowName
+	 *            The name of row, which will be shown in the first cell.
+	 * @param columnNumber
+	 *            The starting column of the insertion.
+	 * @param rowNumber
+	 *            The starting row of the insertion
+	 * @throws IOException
+	 */
+	public void addRecordsToFileAsRow(List<String> entries, File file, String sheetName, String rowName,
+			int columnNumber, int rowNumber) throws IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
+		XSSFSheet workSheet = getSheet(workBook, sheetName);
+		XSSFRow row = getRow(workSheet, rowNumber);
+		XSSFCell cell = row.getCell(columnNumber, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+		cell.setCellType(CellType.STRING);
+		cell.setCellValue(rowName);
+		for (int i = 0; i < entries.size(); i++) {
+			cell = row.getCell(columnNumber + 1 + i, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+			cell.setCellType(CellType.STRING);
+			cell.setCellValue(entries.get(i));
+		}
+		FileOutputStream output = new FileOutputStream(file);
+		workBook.write(output);
+		output.close();
+
+	}
+
+	/**
+	 * Adds the given records to the file as a row. Used if the row does not
+	 * have a title
+	 * 
+	 * @param entries
+	 *            The entries that should be added
+	 * @param file
+	 *            The file into which the user wants to upload the data.
+	 * @param sheetName
+	 *            The name of the into which the user wants to upload the data.
+	 * @param columnNumber
+	 *            The starting column of the insertion.
+	 * @param rowNumber
+	 *            The starting row of the insertion
+	 * @throws IOException
+	 */
+	public void addRecordsToFileAsRow(List<String> entries, File file, String sheetName, int columnNumber,
+			int rowNumber) throws IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
+		XSSFSheet workSheet = getSheet(workBook, sheetName);
+		XSSFRow row = getRow(workSheet, rowNumber);
+		XSSFCell cell;
+		for (int i = 0; i < entries.size(); i++) {
+			cell = row.getCell(columnNumber + i, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+			cell.setCellType(CellType.STRING);
+			cell.setCellValue(entries.get(i));
+		}
+		FileOutputStream output = new FileOutputStream(file);
+		workBook.write(output);
+		output.close();
+	}
+
+	/**
+	 * Adds the given records to the file as a column.
+	 * 
+	 * @param entries
+	 *            The entries that should be added
+	 * @param file
+	 *            The file into which the user wants to upload the data.
+	 * @param sheetName
+	 *            The name of the into which the user wants to upload the data.
+	 * @param columnName
+	 *            The name of column, which will be shown in the first cell.
+	 * @param columnNumber
+	 *            The starting column of the insertion.
+	 * @param rowNumber
+	 *            The starting row of the insertion
+	 * @throws IOException
+	 */
+	public void addRecordsToFileAsColumn(List<String> entries, File file, String sheetName, int columnNumber,
+			int rowNumber) throws IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
+		XSSFSheet workSheet = getSheet(workBook, sheetName);
+		XSSFRow row;
+		XSSFCell cell;
+		for (int i = 0; i < entries.size(); i++) {
+			row = getRow(workSheet, rowNumber + i);
+			cell = row.getCell(columnNumber, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+			cell.setCellType(CellType.STRING);
+			cell.setCellValue(entries.get(i));
+		}
+		FileOutputStream output = new FileOutputStream(file);
+		workBook.write(output);
+		output.close();
+	}
+
+	/**
+	 * Adds the given records to the file as a column. Used if the column does
+	 * not have a title.
+	 * 
+	 * @param entries
+	 *            The entries that should be added
+	 * @param file
+	 *            The file into which the user wants to upload the data.
+	 * @param sheetName
+	 *            The name of the into which the user wants to upload the data.
+	 * @param columnNumber
+	 *            The starting column of the insertion.
+	 * @param rowNumber
+	 *            The starting row of the insertion
+	 * @throws IOException
+	 */
+	public void addRecordsToFileAsColumn(List<String> entries, File file, String sheetName, String columnName,
+			int columnNumber, int rowNumber) throws IOException {
+		XSSFWorkbook workBook = loadWorkBook(file);
+		XSSFSheet workSheet = getSheet(workBook, sheetName);
+		XSSFRow row = getRow(workSheet, rowNumber);
+		XSSFCell cell = row.getCell(columnNumber, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+		cell.setCellType(CellType.STRING);
+		cell.setCellValue(columnName);
+		for (int i = 0; i < entries.size(); i++) {
+			row = getRow(workSheet, rowNumber + 1 + i);
+			cell = row.getCell(columnNumber, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+			cell.setCellType(CellType.STRING);
+			cell.setCellValue(entries.get(i));
+		}
+		FileOutputStream output = new FileOutputStream(file);
+		workBook.write(output);
+		output.close();
+	}
+
+	/**
+	 * A method which tries to get a sheet in the workbook. If the sheet does
+	 * not exist, it is created.
+	 * 
+	 * @param workBook
+	 *            The workbook in which the sheet should be found
+	 * @param sheetName
+	 *            The name of the sheet.
+	 * @return An object representing the worksheet.
+	 */
+	private XSSFSheet getSheet(XSSFWorkbook workBook, String sheetName) {
+		XSSFSheet workSheet;
+		if (workBook.getSheet(sheetName) == null) {
+			workSheet = workBook.createSheet(sheetName);
+			XSSFCell cell = workSheet.createRow(0).createCell(0, CellType.STRING);
+		} else {
+			workSheet = workBook.getSheet(sheetName);
+		}
+		return workSheet;
+	}
+
+	/**
+	 * A method which tries to get a row in the worksheet. If the row does not
+	 * exist, it is created.
+	 * 
+	 * @param sheet
+	 *            The sheet in which the row should be found.
+	 * @param rowNumber
+	 *            The index of the row.
+	 * @return an object representing the row.
+	 */
+	private XSSFRow getRow(XSSFSheet sheet, int rowNumber) {
+		XSSFRow row;
+		if (sheet.getRow(rowNumber) == null) {
+			row = sheet.createRow(rowNumber);
+		} else {
+			row = sheet.getRow(rowNumber);
+		}
+		return row;
+	}
 }
