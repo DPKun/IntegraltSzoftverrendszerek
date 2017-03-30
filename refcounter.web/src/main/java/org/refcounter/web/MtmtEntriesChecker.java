@@ -17,10 +17,10 @@ import org.jsoup.select.Elements;
  *
  */
 
-public class MtmtEntriesChecker implements Runnable, Checker {
+public class MtmtEntriesChecker implements Checker {
 
 	private List<String> iSSNs;
-	private List<String> entries = new ArrayList<String>();
+	private List<String> results = new ArrayList<String>();
 
 	public MtmtEntriesChecker(List<String> iSSNs) {
 		super();
@@ -35,12 +35,12 @@ public class MtmtEntriesChecker implements Runnable, Checker {
 		this.iSSNs = iSSNs;
 	}
 
-	public List<String> getEntries() {
-		return entries;
+	public List<String> getResults() {
+		return results;
 	}
 
-	public void setEntries(List<String> entries) {
-		this.entries = entries;
+	public void setResults(List<String> entries) {
+		this.results = entries;
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class MtmtEntriesChecker implements Runnable, Checker {
 	public void run() {
 		for (String iSSN : iSSNs) {
 			try {
-				entries.add(getInfo(iSSN));
+				results.add(getInfo(iSSN));
 			} catch (IOException e) {
 				System.out.println("Thread crashed at: " + iSSN);
 				e.printStackTrace();

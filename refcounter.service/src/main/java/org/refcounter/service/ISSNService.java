@@ -2,54 +2,53 @@ package org.refcounter.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.stream.Stream;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.refcounter.persist.excel.XlsxParser;
+import org.refcounter.web.Checker;
 import org.refcounter.web.MtmtEntriesChecker;
 
 public class ISSNService {
 	static XlsxParser parser;
-	
-	public static void main(String[] args) throws IOException, InvalidFormatException, InterruptedException{	
+
+	public static void main(String[] args) throws IOException, InvalidFormatException, InterruptedException {
 		parser = new XlsxParser();
-		File file=new File("D:\\elsoResz.xlsx");
-		List<String> iSSNs =parser.getDataValues(file, "Munka1", false, 0, 0);
-		List<String> iSSN1 = iSSNs.subList(0, iSSNs.size()/3);
-		List<String> iSSN2 = iSSNs.subList(iSSNs.size()/3, iSSNs.size()/3*2);
-		List<String> iSSN3 = iSSNs.subList(iSSNs.size()/3*2, iSSNs.size());
-		MtmtEntriesChecker checker1 = new MtmtEntriesChecker(iSSN1);
-		MtmtEntriesChecker checker2 = new MtmtEntriesChecker(iSSN2);
-		MtmtEntriesChecker checker3 = new MtmtEntriesChecker(iSSN3);
-		if(iSSN1.get(iSSN1.size()-1).equals(iSSN2.get(0))){
-			iSSN1.remove(iSSN1.size()-1);
+		File file = new File("D:\\DOÁB.xlsx");
+		List<String> iSSNs = parser.getDataValues(file, "Nemzetközi", false, 0, 2);
+		List<List<String>> lists = new ArrayList<>();
+		for (int i = 1; i < 9; i++) {
+			lists.add(iSSNs.subList(iSSNs.size() / 9 * i - 1, iSSNs.size() / 9 * i));
 		}
-		if(iSSN2.get(iSSN2.size()-1).equals(iSSN3.get(0))){
-			iSSN2.remove(iSSN2.size()-1);
+		lists.add(iSSNs.subList(iSSNs.size() / 9 * 8, iSSNs.size()));
+		List<Checker> checkers = new ArrayList<>();
+		for (List<String> list : lists) {
+			System.out.println(list.get(0));
+			checkers.add(new MtmtEntriesChecker(list));
 		}
-		Thread thread1 = new Thread(checker1, "thread1");
-		Thread thread2 = new Thread(checker2, "thread2");
-		Thread thread3 = new Thread(checker3, "thread3");
 		List<Thread> threads = new ArrayList<Thread>();
-		threads.add(thread1);
-		threads.add(thread2);
-		threads.add(thread3);
-		for(Thread thread : threads){
+		for (Checker checker : checkers) {
+			threads.add(new Thread(checker));
+		}
+		for (Thread thread : threads) {
 			thread.start();
 		}
-		for(Thread thread : threads){
+		for (Thread thread : threads) {
 			thread.join();
 		}
-		List<String> resultEntries = checker1.getEntries();
-		for(int i =0; i<checker2.getEntries().size();i++){
-			resultEntries.add(checker2.getEntries().get(i));
+		List<String> resultEntries = new ArrayList<>();
+		for (Checker checker : checkers) {
+			resultEntries.addAll(checker.getResults());
 		}
-		for(int i =0; i<checker3.getEntries().size();i++){
-			resultEntries.add(checker3.getEntries().get(i));
-		}
-		parser.addRecordsToFile(iSSNs, file, "eredmeny4", "ISSN");
-		parser.addRecordsToFile(resultEntries, file, "eredmeny4", "bejegyzes");
+		parser.addRecordsToFileAsColumn(iSSNs, file, "result", 0, 0);
+		parser.addRecordsToFileAsColumn(resultEntries, file, "result", 1, 0);
 	}
 
 }

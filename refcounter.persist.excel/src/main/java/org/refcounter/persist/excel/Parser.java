@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
@@ -33,4 +34,6 @@ public interface Parser {
 
 	public void addRecordsToFileAsColumn(List<String> entries, File file, String sheetName, String columnName,
 			int columnNumber, int rowNumber) throws IOException;
+	
+	public Set<String> getSheetNames(File file) throws IOException;
 }

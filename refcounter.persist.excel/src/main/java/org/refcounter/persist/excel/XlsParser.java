@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -352,7 +355,7 @@ public class XlsParser implements Parser {
 		HSSFSheet workSheet;
 		if (workBook.getSheet(sheetName) == null) {
 			workSheet = workBook.createSheet(sheetName);
-			HSSFCell cell = workSheet.createRow(0).createCell(0, CellType.STRING);
+			workSheet.createRow(0).createCell(0, CellType.STRING);
 		} else {
 			workSheet = workBook.getSheet(sheetName);
 		}
@@ -377,6 +380,20 @@ public class XlsParser implements Parser {
 			row = sheet.getRow(rowNumber);
 		}
 		return row;
+	}
+
+	/**
+	 * A method which gets all sheet names found in a file
+	 * @param file The file in which the method should search
+	 * @return the sheet names as a set
+	 */
+	public Set<String> getSheetNames(File file) throws IOException {
+		HSSFWorkbook workBook= loadWorkBook(file);
+		Set<String> sheetNames = new HashSet<String>();
+		for(int i=0;i<workBook.getNumberOfSheets();i++){
+			sheetNames.add(workBook.getSheetName(i));
+		}
+		return sheetNames;
 	}
 
 }

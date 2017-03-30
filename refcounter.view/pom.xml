@@ -22,5 +22,10 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+    <groupId>com.zenjava</groupId>
+    <artifactId>javafx-basic-archetype</artifactId>
+    <version>8.1.5</version>
+</dependency>
   </dependencies>
 </project>
