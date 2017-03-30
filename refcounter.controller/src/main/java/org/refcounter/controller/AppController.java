@@ -78,6 +78,7 @@ public class AppController {
 	 */
 	@FXML
 	private void initialize() {
+		//listeners
 		inputFile.textProperty().addListener(new ChangeListener<String>() {
 
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -94,6 +95,7 @@ public class AppController {
 			}
 
 		});
+		//number only filter
 		UnaryOperator<Change> filter = change -> {
 		    String text = change.getText();
 
