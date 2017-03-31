@@ -32,5 +32,10 @@
     	<artifactId>refcounter.view</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
     </dependency>
+    <dependency>
+    	<groupId>uni.iit</groupId>
+    	<artifactId>refcounter.service</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 </project>

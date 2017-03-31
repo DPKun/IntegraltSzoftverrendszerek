@@ -22,7 +22,7 @@
             <Text layoutX="28.0" layoutY="245.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Kezdő sor:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="250.0" />
             <Text layoutX="14.0" layoutY="151.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Keresés Iránya:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="150.0" />
             <TextField fx:id="inputRow" layoutX="171.0" layoutY="195.0" prefWidth="70.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="250.0" />
-            <ChoiceBox layoutX="14.0" layoutY="73.0" prefWidth="150.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="100.0" />
+            <ChoiceBox fx:id="inputWorksheet" disable="true" layoutX="14.0" layoutY="73.0" prefWidth="150.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="100.0" />
             <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Munkalap:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="100.0" />
             <Button fx:id="chooseInputFile" layoutX="329.0" layoutY="30.0" mnemonicParsing="false" onAction="#setInputPath" text="Kiválasztás" AnchorPane.leftAnchor="330.0" AnchorPane.topAnchor="50.0" />
             <Text layoutX="14.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Bemenet:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="10.0">
@@ -35,9 +35,9 @@
                   <Font name="System Bold" size="15.0" />
                </font>
             </Text>
-            <CheckBox layoutX="272.0" layoutY="240.0" mnemonicParsing="false" text="Név" AnchorPane.rightAnchor="260.0" AnchorPane.topAnchor="240.0" />
-            <CheckBox layoutX="282.0" layoutY="250.0" mnemonicParsing="false" text="Rövid név" AnchorPane.rightAnchor="160.0" AnchorPane.topAnchor="240.0" />
-            <CheckBox layoutX="292.0" layoutY="260.0" mnemonicParsing="false" text="Közlemények" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="240.0" />
+            <CheckBox fx:id="name" layoutX="272.0" layoutY="240.0" mnemonicParsing="false" text="Név" AnchorPane.rightAnchor="260.0" AnchorPane.topAnchor="240.0" />
+            <CheckBox fx:id="shortName" layoutX="282.0" layoutY="250.0" mnemonicParsing="false" text="Rövid név" AnchorPane.rightAnchor="160.0" AnchorPane.topAnchor="240.0" />
+            <CheckBox fx:id="entry" layoutX="292.0" layoutY="260.0" mnemonicParsing="false" text="Közlemények" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="240.0" />
             <Group layoutX="275.0" layoutY="161.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="150.0">
                <children>
                   <RadioButton layoutX="90.0" mnemonicParsing="false" text="Sor" />
@@ -67,7 +67,7 @@
             <TextField fx:id="outputFile" editable="false" layoutX="75.0" layoutY="35.0" minWidth="300.0" promptText="Fájl elérés" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="50.0" />
             <Button fx:id="chooseOutputFile" layoutX="341.0" layoutY="48.0" mnemonicParsing="false" onAction="#setOutputPath" text="Kiválasztás" AnchorPane.leftAnchor="330.0" AnchorPane.topAnchor="50.0" />
             <Text layoutX="21.0" layoutY="107.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Munkalap:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="100.0" />
-            <ChoiceBox layoutX="132.0" layoutY="87.0" prefWidth="150.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="100.0" />
+            <ChoiceBox fx:id="outputWorksheet" disable="true" layoutX="132.0" layoutY="87.0" prefWidth="150.0" AnchorPane.leftAnchor="120.0" AnchorPane.topAnchor="100.0" />
             <Text layoutX="13.0" layoutY="148.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Keresés Iránya:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="150.0" />
             <Text layoutX="35.0" layoutY="208.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Kezdő oszlop:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="200.0" />
             <Text layoutX="24.0" layoutY="240.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Kezdő sor:" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="250.0" />

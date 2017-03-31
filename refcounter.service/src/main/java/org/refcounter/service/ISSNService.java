@@ -8,16 +8,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.refcounter.persist.excel.Parser;
+import org.refcounter.persist.excel.ParserFactory;
 import org.refcounter.persist.excel.XlsxParser;
 import org.refcounter.web.Checker;
 import org.refcounter.web.MtmtEntriesChecker;
 
 public class ISSNService {
-	static XlsxParser parser;
+	static Parser parser;
 
 	public static void main(String[] args) throws IOException, InvalidFormatException, InterruptedException {
 		parser = new XlsxParser();
@@ -49,6 +53,13 @@ public class ISSNService {
 		}
 		parser.addRecordsToFileAsColumn(iSSNs, file, "result", 0, 0);
 		parser.addRecordsToFileAsColumn(resultEntries, file, "result", 1, 0);
+	}
+	
+	public Set<String> getWorkSheets(File file) throws IOException{
+		Set<String> result;
+		parser=ParserFactory.getParser(FilenameUtils.getExtension(file.getName()));
+		result=parser.getSheetNames(file);
+		return result;
 	}
 
 }
