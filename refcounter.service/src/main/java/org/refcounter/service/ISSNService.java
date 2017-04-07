@@ -53,15 +53,17 @@ public class ISSNService {
 	 *            The starting column of the uploading
 	 * @param entries
 	 *            The entries that should be uploaded
-	 * @throws IOException IOException if thrown if the method cannot gain access to the file to write the data
+	 * @throws IOException
+	 *             IOException if thrown if the method cannot gain access to the
+	 *             file to write the data
 	 */
-	public void addResultsAsRow(File file, String sheetName, int row, int column,
-			HashMap<String, List<String>> entries) throws IOException {
-		if(file.exists()){
+	public void addResultsAsRow(File file, String sheetName, int row, int column, HashMap<String, List<String>> entries)
+			throws IOException {
+		if (file.exists()) {
 			try {
 				FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
-				FileLock lock=channel.lock();
-				lock=channel.tryLock();
+				FileLock lock = channel.lock();
+				lock = channel.tryLock();
 				lock.release();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -74,8 +76,7 @@ public class ISSNService {
 			Entry<String, List<String>> actual = (Entry) mapIterator.next();
 
 			try {
-				parser.addRecordsToFileAsRow(actual.getValue(), file, sheetName, actual.getKey(), column,
-						row + i);
+				parser.addRecordsToFileAsRow(actual.getValue(), file, sheetName, actual.getKey(), column, row + i);
 				i++;
 			} catch (IOException e) {
 				e = new IOException("A fájlt nem lehet megnyitni, kérem zárja be, mielőtt folytatná a műveletet.");
@@ -98,15 +99,17 @@ public class ISSNService {
 	 *            The starting column of the uploading
 	 * @param entries
 	 *            The entries that should be uploaded
-	 * @throws IOException IOException if thrown if the method cannot gain access to the file to write the data
+	 * @throws IOException
+	 *             IOException if thrown if the method cannot gain access to the
+	 *             file to write the data
 	 */
 	public void addResultsAsColumn(File file, String sheetName, int row, int column,
 			HashMap<String, List<String>> entries) throws IOException {
-		if(file.exists()){
+		if (file.exists()) {
 			try {
 				FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
-				FileLock lock=channel.lock();
-				lock=channel.tryLock();
+				FileLock lock = channel.lock();
+				lock = channel.tryLock();
 				lock.release();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -146,13 +149,14 @@ public class ISSNService {
 	public HashMap<String, List<String>> queryWebpage(List<CheckerType> queries, List<String> issns)
 			throws InterruptedException {
 		List<List<String>> lists = new ArrayList<>();
-		//Create a sublist for each thread the method runs
+		// Create a sublist for each thread the method runs
 		for (int i = 1; i < 9; i++) {
 			lists.add(issns.subList(issns.size() / 9 * i - 1, issns.size() / 9 * i));
 		}
 		lists.add(issns.subList(issns.size() / 9 * 8, issns.size()));
 		List<CompositeChecker> checkers = new ArrayList<>();
-		//create a compositeChecker for each list, then run them as separate threads
+		// create a compositeChecker for each list, then run them as separate
+		// threads
 		for (List<String> list : lists) {
 			checkers.add(new CompositeChecker(list, queries));
 		}
@@ -167,7 +171,8 @@ public class ISSNService {
 		for (Thread thread : threads) {
 			thread.join();
 		}
-		//Join the separate results together into a hashmap, then return with them.
+		// Join the separate results together into a hashmap, then return with
+		// them.
 		HashMap<String, List<String>> results = new HashMap<>();
 		results.put("ISSN", issns);
 		for (CheckerType query : queries) {
@@ -183,13 +188,20 @@ public class ISSNService {
 
 	/**
 	 * Load a row of ISSN numbers for querying
-	 * @param file The file from which the method should load the data
-	 * @param sheet The worksheet from which the method should load the data
-	 * @param row The row from which the data should be loaded
-	 * @param column The starting column of the querying
+	 * 
+	 * @param file
+	 *            The file from which the method should load the data
+	 * @param sheet
+	 *            The worksheet from which the method should load the data
+	 * @param row
+	 *            The row from which the data should be loaded
+	 * @param column
+	 *            The starting column of the querying
 	 * @return A list of ISSN numbers as string
-	 * @throws InvalidFormatException If the file is not in the expected format.
-	 * @throws IOException If the file cannot be accessed
+	 * @throws InvalidFormatException
+	 *             If the file is not in the expected format.
+	 * @throws IOException
+	 *             If the file cannot be accessed
 	 */
 	public List<String> loadFromRow(File file, String sheet, int row, int column)
 			throws InvalidFormatException, IOException {
@@ -201,13 +213,20 @@ public class ISSNService {
 
 	/**
 	 * Load a column of ISSN numbers for querying
-	 * @param file The file from which the method should load the data
-	 * @param sheet The worksheet from which the method should load the data
-	 * @param row The starting row of the query
-	 * @param column The column from which the data should be loaded
+	 * 
+	 * @param file
+	 *            The file from which the method should load the data
+	 * @param sheet
+	 *            The worksheet from which the method should load the data
+	 * @param row
+	 *            The starting row of the query
+	 * @param column
+	 *            The column from which the data should be loaded
 	 * @return A list of ISSN numbers as string
-	 * @throws InvalidFormatException If the file is not in the expected format.
-	 * @throws IOException If the file cannot be accessed
+	 * @throws InvalidFormatException
+	 *             If the file is not in the expected format.
+	 * @throws IOException
+	 *             If the file cannot be accessed
 	 */
 	public List<String> loadFromColumn(File file, String sheet, int row, int column)
 			throws InvalidFormatException, IOException {
