@@ -1,10 +1,8 @@
 package org.refcounter.web;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -17,22 +15,11 @@ import org.jsoup.select.Elements;
  *
  */
 
-public class MtmtShortNameChecker implements Checker, Runnable {
+public class MtmtShortNameChecker implements Checker {
 
-	private List<String> iSSNs;
 	private List<String> results = new ArrayList<String>();
 
-	public MtmtShortNameChecker(List<String> iSSNs) {
-		super();
-		this.iSSNs = iSSNs;
-	}
-
-	public List<String> getiSSNs() {
-		return iSSNs;
-	}
-
-	public void setiSSNs(List<String> iSSNs) {
-		this.iSSNs = iSSNs;
+	public MtmtShortNameChecker() {
 	}
 
 	public List<String> getResults() {
@@ -43,17 +30,6 @@ public class MtmtShortNameChecker implements Checker, Runnable {
 		this.results = entries;
 	}
 
-	public void run() {
-		for (String iSSN : iSSNs) {
-			try {
-				results.add(getInfo(iSSN));
-			} catch (IOException e) {
-				System.out.println("Thread crashed at: " + iSSN);
-				e.printStackTrace();
-			}
-		}
-	}
-
 	/**
 	 * A method which accesses a url of the mtmt search engine and queries the
 	 * short name data of the journal.
@@ -62,16 +38,18 @@ public class MtmtShortNameChecker implements Checker, Runnable {
 	 *            The ISSN number of the journal.
 	 * @return The short name of the journal.
 	 */
-	public String getInfo(String ISSN) throws IOException {
+	public void getInfo(Document doc) {
 		String result = "Not found";
-		Document doc = Jsoup.connect("https://www.mtmt.hu/talalatok?egyszeru_kereses=" + ISSN).get();
 		Elements journalEntry = doc
 				.getElementsByClass("field field-name-field-rovid-nev field-type-text field-label-inline clearfix");
 		for (Element entry : journalEntry) {
 			result = entry.getElementsByClass("field-item even").get(0).text();
 		}
-		System.out.println(ISSN + " : " + result + " found.");
-		return result;
+		results.add(result);
+	}
+
+	public CheckerType getType() {
+		return CheckerType.SHORTNAME;
 	}
 
 }

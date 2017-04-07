@@ -1,10 +1,8 @@
 package org.refcounter.web;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -18,21 +16,9 @@ import org.jsoup.select.Elements;
  */
 
 public class MtmtEntriesChecker implements Checker {
-
-	private List<String> iSSNs;
 	private List<String> results = new ArrayList<String>();
 
-	public MtmtEntriesChecker(List<String> iSSNs) {
-		super();
-		this.iSSNs = iSSNs;
-	}
-
-	public List<String> getiSSNs() {
-		return iSSNs;
-	}
-
-	public void setiSSNs(List<String> iSSNs) {
-		this.iSSNs = iSSNs;
+	public MtmtEntriesChecker(){
 	}
 
 	public List<String> getResults() {
@@ -51,26 +37,18 @@ public class MtmtEntriesChecker implements Checker {
 	 *            The ISSN number of the journal.
 	 * @return The number of entries in the journal.
 	 */
-	public String getInfo(String ISSN) throws IOException {
+	public void getInfo(Document doc){
 		String result = "Not found";
-		Document doc = Jsoup.connect("https://www.mtmt.hu/talalatok?egyszeru_kereses=" + ISSN).get();
 		Elements journalEntry = doc.getElementsByClass(
 				"field field-name-field-kozlemenyek-szama field-type-number-integer field-label-inline clearfix");
 		for (Element entry : journalEntry) {
 			result = entry.getElementsByClass("field-item even").get(0).text();
 		}
-		System.out.println(ISSN + " : " + result + " found.");
-		return result;
+		results.add(result);
 	}
 
-	public void run() {
-		for (String iSSN : iSSNs) {
-			try {
-				results.add(getInfo(iSSN));
-			} catch (IOException e) {
-				System.out.println("Thread crashed at: " + iSSN);
-				e.printStackTrace();
-			}
-		}
+	public CheckerType getType() {
+		return CheckerType.ENTRY;
 	}
+
 }

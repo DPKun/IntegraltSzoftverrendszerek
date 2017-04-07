@@ -3,33 +3,34 @@ package org.refcounter.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Observable;
 import java.util.function.UnaryOperator;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.refcounter.service.ISSNService;
+import org.refcounter.web.CheckerType;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextFormatter.Change;
 import javafx.scene.control.ToggleGroup;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.util.StringConverter;
 
 /**
- * The controller for the application's view;
+ * The controller for the application's main view;
  *
  */
 public class AppController {
@@ -82,6 +83,33 @@ public class AppController {
 	@FXML
 	private TextField outputRow;
 
+	@FXML
+	private RadioButton inputAsRow;
+
+	@FXML
+	private RadioButton inputAsColumn;
+
+	@FXML
+	private RadioButton outputAsRow;
+
+	@FXML
+	private RadioButton outputAsColumn;
+
+	@FXML
+	private ToggleGroup outputNavigation;
+
+	@FXML
+	private ToggleGroup inputNavigation;
+
+	@FXML
+	private Button newFile;
+
+	@FXML
+	private Button newSheet;
+	
+	@FXML
+	private Button Start;
+
 	public AppController() {
 
 	}
@@ -96,10 +124,10 @@ public class AppController {
 
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				enableSameFile();
-				if(sameFile.isSelected()){
+				if (sameFile.isSelected()) {
 					setToSameFile();
 				}
-				if(sameWorksheet.isSelected()){
+				if (sameWorksheet.isSelected()) {
 					outputWorksheet.setDisable(true);
 				}
 
@@ -109,13 +137,12 @@ public class AppController {
 
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-				if(sameWorksheet.isSelected()){
+				if (sameWorksheet.isSelected()) {
 					outputWorksheet.getSelectionModel().clearAndSelect(newValue.intValue());
 				}
-				
+
 			}
 
-	
 		});
 		sameFile.selectedProperty().addListener(new ChangeListener<Boolean>() {
 
@@ -162,6 +189,8 @@ public class AppController {
 	 * Opens a FileChooser interface for the user on which an excel file can be
 	 * chosen.
 	 * 
+	 * @param true
+	 *            for the opened file, false for the destination file
 	 * @return the absolute path of the chosen file;
 	 */
 	public String chooseFile() {
@@ -249,12 +278,12 @@ public class AppController {
 			outputWorksheet.setDisable(false);
 			outputWorksheet.getSelectionModel().selectFirst();
 			outputWorksheet.setValue(outputWorksheet.getSelectionModel().getSelectedItem());
-			
+
 		}
 	}
 
 	/**
-	 * The method sets the output path to the same value as the filechooser
+	 * The method sets the output path to the same value as the input file.
 	 */
 	@FXML
 	public void setToSameFile() {
@@ -276,23 +305,27 @@ public class AppController {
 				outputWorksheet.setValue(outputWorksheet.getSelectionModel().getSelectedItem());
 			}
 			chooseOutputFile.setDisable(true);
-			
+			newFile.setDisable(true);
+
 			sameWorksheet.setOpacity(1);
 		} else {
 			chooseOutputFile.setDisable(false);
+			newFile.setDisable(false);
 			outputWorksheet.setItems(FXCollections.observableArrayList());
 			sameWorksheet.setOpacity(0);
 			sameWorksheet.setSelected(false);
 		}
 	}
-	
+
 	@FXML
-	public void setToSameWorksheet(){
-		if(sameWorksheet.isSelected()){
+	public void setToSameWorksheet() {
+		if (sameWorksheet.isSelected()) {
 			outputWorksheet.getSelectionModel().clearAndSelect(inputWorksheet.getSelectionModel().getSelectedIndex());
 			outputWorksheet.setDisable(true);
-		}else{
+			newSheet.setDisable(true);
+		} else {
 			outputWorksheet.setDisable(false);
+			newSheet.setDisable(false);
 		}
 	}
 
@@ -305,6 +338,182 @@ public class AppController {
 			sameFile.setOpacity(1);
 		} else {
 			sameFile.setOpacity(0);
+		}
+	}
+
+	/**
+	 * The method tries to run the showNewFileWindow method of the mainApp and
+	 * handles the showing of the results in the window.
+	 */
+	@FXML
+	public void createNewFile() {
+		List<String> result = mainApp.showNewFileWindow();
+		outputFile.setText(result.get(0));
+		outputWorksheet.setItems(FXCollections.observableArrayList(result.get(1)));
+		outputWorksheet.getSelectionModel().clearAndSelect(0);
+		outputWorksheet.setDisable(false);
+	}
+
+	/**
+	 * The method tries to run the showNewWorksheetWindow method of the mainApp
+	 * and handles the showing of the results in the window.
+	 */
+	@FXML
+	public void createNewWorksheet() {
+		ObservableList<String> entries = outputWorksheet.getItems();
+		String newSheet = mainApp.showNewWorksheetWindow();
+		if (entries.contains(newSheet)) {
+			showAlert("Már létezik a munkalap", "Az ön által megadott nevű munkalap már létezik", new Exception());
+		} else {
+			entries.add(newSheet);
+			outputWorksheet.setItems(entries);
+			outputWorksheet.getSelectionModel().clearAndSelect(entries.indexOf(newSheet));
+		}
+	}
+
+	@FXML
+	public void startquery() {
+		if (!validate()) {
+		} else {
+			ISSNService service = new ISSNService();
+			List<CheckerType> queries = new ArrayList<>();
+			if (name.isSelected()) {
+				queries.add(CheckerType.NAME);
+			}
+			if (shortName.isSelected()) {
+				queries.add(CheckerType.SHORTNAME);
+			}
+			if (entry.isSelected()) {
+				queries.add(CheckerType.ENTRY);
+			}
+			List<String> issns = new ArrayList<>();
+			// Getting the issn numbers from the chosen file and worksheet.
+			try {
+				if (inputAsRow.isSelected()) {
+					issns = service.loadFromRow(new File(inputFile.getText()),
+							inputWorksheet.getSelectionModel().getSelectedItem(), Integer.parseInt(inputRow.getText()),
+							Integer.parseInt(inputColumn.getText()));
+				} else {
+					issns = service.loadFromColumn(new File(inputFile.getText()),
+							inputWorksheet.getSelectionModel().getSelectedItem(), Integer.parseInt(inputRow.getText()),
+							Integer.parseInt(inputColumn.getText()));
+				}
+			} catch (NumberFormatException e) {
+				showAlert("Nem szám az érték!",
+						"Az egyik sorhoz vagy oszlophoz nem számot adott meg, pedig ezt várja a rendszer!", e);
+				e.printStackTrace();
+			} catch (InvalidFormatException e) {
+				showAlert("Nem megfelelő formátum", "Ez a fájl nem a megfelelő formátumú, kérem válasszon másikat!", e);
+				e.printStackTrace();
+			} catch (IOException e) {
+				showAlert("Hiba megnyitáskor",
+						"A fájlhoz vagy a munkalaphoz nem lehetett hozzáférni, kérem ellenőrizze, hogy megfelelő paramétereket adott-e meg.",
+						e);
+				e.printStackTrace();
+			}
+			// queerying the data from the web.
+			HashMap<String, List<String>> webQueries = new HashMap<>();
+			if (issns.isEmpty()) {
+				showAlert("Nincs ISSN",
+						"A keresés nem talált ISSN számot a megadott helyen.\n Kérem ellenőrizze a formátumot és a megadott helyet.",
+						new Exception());
+			} else {
+				try {
+					webQueries = service.queryWebpage(queries, issns);
+				} catch (InterruptedException e) {
+					showAlert("Művelet megszakítva",
+							"A művelet menetközben megszakadt.\n" + "Kérem ellenőrizze az internetkapcsolatát", e);
+					e.printStackTrace();
+				}
+			}
+			// adding the queried data to the selected file and worksheet
+			File outFile = new File(outputFile.getText());
+			try {
+				if (outputAsRow.isSelected()) {
+
+					service.addResultsAsRow(outFile, outputWorksheet.getSelectionModel().getSelectedItem(),
+							Integer.parseInt(outputRow.getText()), Integer.parseInt(outputColumn.getText()),
+							webQueries);
+				} else {
+					service.addResultsAsColumn(outFile, outputWorksheet.getSelectionModel().getSelectedItem(),
+							Integer.parseInt(outputRow.getText()), Integer.parseInt(outputColumn.getText()),
+							webQueries);
+				}
+			} catch (NumberFormatException e) {
+				showAlert("Nem szám lett megadva",
+						"Az oszlop vagy sor mezőnek nem szám lett megadva, kérem számot adjon meg!", e);
+				e.printStackTrace();
+			} catch (IOException e) {
+				showAlert("Nincs hozzáférés",
+						"A fájlhoz nem lehet hozzáférni. Kérem zárjon be minden olyan programot, amely használja a fájlt és utána kattintson az OK-ra, vagy az adatok nem kerülnk elmentésre",
+						e);
+				try {
+					if (outputAsRow.isSelected()) {
+						service.addResultsAsRow(outFile, outputWorksheet.getSelectionModel().getSelectedItem(),
+								Integer.parseInt(outputRow.getText()), Integer.parseInt(outputColumn.getText()),
+								webQueries);
+
+					} else {
+						service.addResultsAsColumn(outFile, outputWorksheet.getSelectionModel().getSelectedItem(),
+								Integer.parseInt(outputRow.getText()), Integer.parseInt(outputColumn.getText()),
+								webQueries);
+					}
+				} catch (NumberFormatException | IOException e1) {
+					// if the process denying access to the file is not closed,
+					// then the data is lost and the query has to be done again.
+				}
+				e.printStackTrace();
+			}
+
+		}
+	}
+
+	/**
+	 * A method which checks if all of the needed data is oresent and is
+	 * presented in an acceptable manner.
+	 * 
+	 * @return
+	 */
+	public boolean validate() {
+		String error = "";
+		if (!name.isSelected() && !shortName.isSelected() && !entry.isSelected()) {
+			error += "Nincs lekérdezés kiválasztva!";
+		}
+		if (inputWorksheet.getSelectionModel().getSelectedItem() == null) {
+			error += "Nincs megadva, hogy melyik munkalapon vannak az ISSN számok!";
+		}
+		if (outputWorksheet.getSelectionModel().getSelectedItem() == null) {
+			error += "Nincs megadva, hogy melyik munkalapra legyenek mentve az adatok!";
+		}
+		if (inputFile.getText() == null || inputFile.getText() == "") {
+			error += "Nincs megadva, hogy mely fájlban találhatóak az ISSN számok!";
+		}
+		if (outputFile.getText() == null || outputFile.getText() == "") {
+			error += "Nincs megadva, hogy mely fájlba legyenek lementve az eredmények!";
+		}
+		if (inputColumn.getText() == null || inputColumn.getText() == "") {
+			error += "Nincs megadva, hogy melyik oszlopban kezdődik az ISSN számok lekérdezése.";
+		}
+		if (inputRow.getText() == null || inputRow.getText() == "") {
+			error += "Nincs megadva, hogy melyik sorban kezdődik az ISSN számok lekérdezése.";
+		}
+		if (outputColumn.getText() == null || outputColumn.getText() == "") {
+			error += "Nincs megadva, hogy melyik oszlopban kezdődik a kinyert adatok mentése.";
+		}
+		if (outputRow.getText() == null || outputRow.getText() == "") {
+			error += "Nincs megadva, hogy melyik sorban kezdődik a kinyert adatok mentése.";
+		}
+		if (error.equals("")) {
+			return true;
+		} else {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Hibás Mezők");
+			alert.setHeaderText("Kérem javítsa ki a hibás mezőket");
+			alert.setContentText(error);
+
+			alert.showAndWait();
+
+			return false;
 		}
 	}
 }

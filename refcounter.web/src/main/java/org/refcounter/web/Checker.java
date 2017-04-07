@@ -1,11 +1,14 @@
 package org.refcounter.web;
 
-import java.io.IOException;
 import java.util.List;
 
-public interface Checker extends Runnable{
+import org.jsoup.nodes.Document;
 
+public interface Checker{
+
+	public CheckerType getType();
+	
 	public List<String> getResults();
 	
-	public String getInfo(String ISSN) throws IOException;
+	public void getInfo(Document doc);
 }

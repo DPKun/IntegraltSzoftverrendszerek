@@ -1,17 +1,21 @@
 package org.refcounter.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.refcounter.controller.AppController;
+import org.refcounter.controller.NewFileController;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Hello world!
+ * The main class of the JavaFX application
  *
  */
 public class MainApp extends Application {
@@ -68,4 +72,75 @@ public class MainApp extends Application {
 	 public Stage getPrimaryStage() {
 	        return primaryStage;
 	    }
+	 
+	 /**
+	  * The initializing method of the new file window.
+	  * @return the new file with location and its first worksheet name.
+	  */
+	 public List<String> showNewFileWindow(){
+		 List<String> result= new ArrayList<>();
+		 try {		 
+		// Load the user interface of the application
+         FXMLLoader loader = new FXMLLoader();
+         loader.setLocation(MainApp.class.getResource("/NewFileWindow.fxml"));
+		 AnchorPane panel = (AnchorPane) loader.load();
+		
+		// Create the dialog Stage.
+         Stage dialogStage = new Stage();
+         dialogStage.setTitle("Új Fájl");
+         dialogStage.initModality(Modality.WINDOW_MODAL);
+         dialogStage.initOwner(primaryStage);
+         Scene scene = new Scene(panel);
+         dialogStage.setScene(scene);
+         
+         // Give the controller access to the main app.
+         NewFileController controller = loader.getController();
+         controller.setDialogStage(dialogStage);
+         
+         dialogStage.showAndWait();
+         result.add(controller.getFile());
+         result.add(controller.getSheet());
+		 } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+         return result;
+	 }
+	 
+	 /**
+	  * The initializing method of the new worksheet window.
+	  * @return the new worksheet name.
+	  */
+	 public String showNewWorksheetWindow(){
+		 String result="";
+		 try {
+		 // Load the user interface of the application
+         FXMLLoader loader = new FXMLLoader();
+         loader.setLocation(MainApp.class.getResource("/NewWorksheetWindow.fxml"));
+		 AnchorPane panel;
+		
+			panel = (AnchorPane) loader.load();
+		
+		
+		// Create the dialog Stage.
+         Stage dialogStage = new Stage();
+         dialogStage.setTitle("Új munkalap");
+         dialogStage.initModality(Modality.WINDOW_MODAL);
+         dialogStage.initOwner(primaryStage);
+         Scene scene = new Scene(panel);
+         dialogStage.setScene(scene);
+         
+         // Give the controller access to the main app.
+         NewWorksheetController controller = loader.getController();
+         controller.setDialogStage(dialogStage);
+         
+         dialogStage.showAndWait();
+         result=controller.getSheetName();
+         
+		 } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 return result;
+	 }
 }
