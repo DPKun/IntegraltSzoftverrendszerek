@@ -7,5 +7,5 @@ package org.refcounter.web;
  */
 public enum CheckerType {
 
-	ENTRY,NAME,SHORTNAME
+	ENTRY,NAME,SHORTNAME,PERSON,PUBLICATIONS
 }

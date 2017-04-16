@@ -16,20 +16,27 @@ import org.jsoup.nodes.Document;
  */
 
 public class CompositeChecker implements Runnable, Checker{
+	private PageAddress webpage;
 	
 	private List<Checker> checkers = new ArrayList<Checker>();
 	
 	private List<String> ISSNs;
 	
-	public CompositeChecker(List<String> issns,List<CheckerType> checkers){
+	public CompositeChecker(List<String> issns,List<CheckerType> checkers,PageAddress webpage){
+		this.webpage=webpage;
 		this.ISSNs=issns;
 		for(CheckerType c : checkers){
 			this.checkers.add(CheckerFactory.getChecker(c));
 		}
 	}
-
+/**
+ * A method which gets the document of a webpage
+ * @param ISSN The ISSN which the software appends to the base webpage
+ * @return The document of the webpage
+ * @throws IOException if the connection cannot be established
+ */
 	public Document connect(String ISSN) throws IOException {
-		Document doc = Jsoup.connect("https://www.mtmt.hu/talalatok?egyszeru_kereses=" + ISSN).get();
+		Document doc = Jsoup.connect(webpage.getAddress() + ISSN).get();
 		return doc;
 	}
 	
@@ -37,7 +44,9 @@ public class CompositeChecker implements Runnable, Checker{
 		checkers.add(checker);
 	}
 	
-
+/**
+ * The runnable implementation
+ */
 	public void run() {
 		for(String issn : ISSNs){
 			try {
@@ -49,7 +58,10 @@ public class CompositeChecker implements Runnable, Checker{
 		}
 	}
 
-
+/**
+ * A method which returns the results of the various checkers added to the composite
+ * @return A hashmap where the type of the checker serves as the key and its results are stored as a list
+ */
 	public HashMap<CheckerType,List<String>> queryResults() {
 		HashMap<CheckerType,List<String>> results=new HashMap<CheckerType, List<String>>();
 		for(Checker c : checkers){

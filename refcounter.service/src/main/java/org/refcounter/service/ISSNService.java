@@ -19,7 +19,12 @@ import org.refcounter.persist.excel.Parser;
 import org.refcounter.persist.excel.ParserFactory;
 import org.refcounter.web.CheckerType;
 import org.refcounter.web.CompositeChecker;
-
+import org.refcounter.web.PageAddress;
+/**
+ * The service implementation for journals.
+ * @author Dániel Péter Kun
+ *
+ */
 public class ISSNService {
 	static Parser parser;
 
@@ -158,7 +163,7 @@ public class ISSNService {
 		// create a compositeChecker for each list, then run them as separate
 		// threads
 		for (List<String> list : lists) {
-			checkers.add(new CompositeChecker(list, queries));
+			checkers.add(new CompositeChecker(list, queries,PageAddress.MTMTJOURNAL));
 		}
 
 		List<Thread> threads = new ArrayList<Thread>();

@@ -10,7 +10,7 @@ import org.jsoup.select.Elements;
 /**
  * An implementation of the checker interface. It searches for the number of
  * entries in a journal by its ISSN number.
- * 
+ * For further documentation see {@docRoot Checker}.
  * @author Dániel Péter Kun
  *
  */
